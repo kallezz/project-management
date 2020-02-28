@@ -7,7 +7,10 @@ const User = require('../../models/User');
 // Get all users
 router.get('/', async (req, res) => {
     try {
+        // Find all users
         const users = await User.find().select('-password -__v');
+
+        // If users not found return 404, if users are found return array
         if (users.length === 0) {
             res.status(404).json({
                 message: 'No users found.',
@@ -30,19 +33,43 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Find user by ID
+router.get('/:id', async (req, res) => {
+    try {
+        // Find company by ID
+        const user = await User.findOne({_id: req.params.id})
+            .select('-__v')
+            .populate('company');
+
+        // Response
+        res.status(200).json({
+            user
+        })
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
 // Register user
 router.post('/', async (req, res) => {
     try {
+        // Find existing user
         const existingUser = await User.findOne({email: req.body.username});
 
+        // Check if user exists with given username
         if (existingUser) {
             res.status(500).json({
                 error: 'User already exists.'
             })
         }
 
+        // Hash password
         const hash = await bcrypt.hash(req.body.password, 10);
 
+        // Construct user object
         const user = new User({
             username: req.body.username,
             email: req.body.email,
@@ -51,9 +78,14 @@ router.post('/', async (req, res) => {
             roles: req.body.roles
         });
 
+        // Save to database
         const result = await user.save();
 
-        res.status(200).json(result)
+        // Response
+        res.status(200).json({
+            message: 'New user created.',
+            result
+        })
     } catch (e) {
         res.status(500).json({
             message: 'Unexpected error.',
@@ -68,7 +100,7 @@ router.post('/login', async (req, res) => {
         // Find user by username
         const user = await User.findOne({ username: req.body.username });
 
-        // If user doesn't exist
+        // Check if user doesn't exist
         if (!user) {
             res.status(401).json({
                 message: 'Authorization failed.',
@@ -80,7 +112,7 @@ router.post('/login', async (req, res) => {
         // Compare password
         const isEqual = await bcrypt.compare(req.body.password, user.password);
 
-        // If password was incorrect
+        // Check if password was incorrect
         if (!isEqual) {
             res.status(401).json({
                 message: 'Authorization failed.',
@@ -110,13 +142,14 @@ router.post('/login', async (req, res) => {
 });
 
 // Update user
-router.post('/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         // Find user by ID
         const user = await User.findOne({_id: req.params.id});
 
         // If new password
         if (req.body.password) {
+            // Check if old password was given
             if (!req.body.oldPassword) {
                 res.status(401).json({
                     message: 'Authorization failed.',
@@ -125,8 +158,10 @@ router.post('/:id', async (req, res) => {
                 return
             }
 
+            // Compare old password
             const isEqual = await bcrypt.compare(req.body.oldPassword, user.password);
 
+            // Check if old password was incorrect
             if (!isEqual) {
                 res.status(401).json({
                     message: 'Authorization failed.',
@@ -135,6 +170,7 @@ router.post('/:id', async (req, res) => {
                 return
             }
 
+            // Hash new password
             req.body.password = await bcrypt.hash(req.body.password, 10);
         }
 
@@ -147,6 +183,7 @@ router.post('/:id', async (req, res) => {
             useFindAndModify: false
         });
 
+        // Response
         res.status(200).json({
             message: 'User updated.',
             oldUser: {

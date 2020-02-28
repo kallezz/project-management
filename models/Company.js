@@ -7,8 +7,7 @@ const companySchema = new mongoose.Schema({
         required: true
     },
     businessId: {
-        type: String,
-        unique: true
+        type: String
     },
     industry: String,
     address: [
@@ -21,8 +20,9 @@ const companySchema = new mongoose.Schema({
     ],
     contacts: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
+            name: String,
+            email: String,
+            phone: String
         }
     ],
     projects: [

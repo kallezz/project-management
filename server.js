@@ -14,6 +14,9 @@ app.get('/', (req, res, next) => {
 const userRoutes = require('./routes/users/users');
 app.use('/users', userRoutes);
 
+const companyRoutes = require('./routes/companies/companies');
+app.use('/companies', companyRoutes);
+
 mongoose.connect('mongodb://localhost/projectmanager', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(console.log('MongoDB succesfully connected.'))
     .catch(e => console.error(e.message));
