@@ -6,6 +6,12 @@ const User = require('../../models/User');
 
 // Get all users
 router.get('/', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find all users
         const users = await User.find().select('-password -__v');
@@ -35,6 +41,12 @@ router.get('/', async (req, res) => {
 
 // Find user by ID
 router.get('/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find company by ID
         const user = await User.findOne({_id: req.params.id})
@@ -55,6 +67,12 @@ router.get('/:id', async (req, res) => {
 
 // Register user
 router.post('/', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('admin')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find existing user
         const existingUser = await User.findOne({email: req.body.username});
@@ -62,6 +80,7 @@ router.post('/', async (req, res) => {
         // Check if user exists with given username
         if (existingUser) {
             res.status(500).json({
+                message: 'Request failed.',
                 error: 'User already exists.'
             })
         }
@@ -123,7 +142,7 @@ router.post('/login', async (req, res) => {
 
         // TODO: Secure secret for JWT
         // Sign a token
-        const token = jwt.sign({userId: user._id, username: user.username}, 'somesecretforlocal', {
+        const token = jwt.sign({userId: user._id, username: user.username, roles: user.roles}, 'somesecretforlocal', {
             expiresIn: '24h'
         });
 
@@ -131,6 +150,7 @@ router.post('/login', async (req, res) => {
         res.status(200).json({
             userId: user._id,
             username: user.username,
+            roles: user.roles,
             token
         })
     } catch (e) {
@@ -143,6 +163,12 @@ router.post('/login', async (req, res) => {
 
 // Update user
 router.put('/:id', async (req, res) => {
+    // if (!req.authenticated || req.userId === req.params.id) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find user by ID
         const user = await User.findOne({_id: req.params.id});
@@ -190,6 +216,35 @@ router.put('/:id', async (req, res) => {
                 ...oldUser._doc,
                 password: null
             }
+        })
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error.',
+            error: e
+        })
+    }
+});
+
+// Delete user
+router.delete('/:id', async (req, res) => {
+    try {
+        // TODO: Cast to ObjectId error response
+        const existingUser = await User.findById(req.params.id);
+
+        if (!existingUser) {
+            res.status(404).json({
+                message: 'Request failed.',
+                error: 'User not found.'
+            });
+            return
+        }
+
+        const deletedUser = await User.deleteOne({_id: req.params.id});
+
+        res.status(200).json({
+            message: 'User deleted.',
+            deletedUser: existingUser,
+            status: deletedUser
         })
     } catch (e) {
         res.status(500).json({

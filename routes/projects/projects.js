@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const Company = require('../../models/Company');
+const Project = require('../../models/Project');
 
-// Get all companies
+// Get all projects
 router.get('/', async (req, res) => {
     try {
         // Find all companies
-        const companies = await Company.find().select('-__v');
+        const projects = await Project.find().select('-__v');
 
         // If none is found return 404, if companies are found return array
-        if (companies.length === 0) {
+        if (projects.length === 0) {
             res.status(404).json({
-                message: 'No companies found.',
+                message: 'No projects found.',
                 request: {
                     type: 'POST',
                     url: 'http://localhost:5000/companies'
@@ -19,8 +19,8 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all companies',
-                companies
+                info: 'List of all projects',
+                projects
             })
         }
     } catch (e) {
@@ -31,17 +31,17 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get company by ID
+// Get project by ID
 router.get('/:id', async (req, res) => {
     try {
-        // Find company by ID
-        const company = await Company.findOne({_id: req.params.id})
+        // Find project by ID
+        const project = await Project.findOne({_id: req.params.id})
             .select('-__v')
-            .populate('projects');
+            .populate('users company documents manager');
 
         // Response
         res.status(200).json({
-            company
+            project
         })
     } catch (e) {
         res.status(500).json({
@@ -51,7 +51,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create company
+// Create project
 router.post('/', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
@@ -60,40 +60,44 @@ router.post('/', async (req, res) => {
     //     return
     // }
     try {
-        // Find existing company
-        const existingCompany = await Company.findOne({name: req.body.name});
+        // Find existing project
+        const existingProject = await Project.findOne({title: req.body.title});
 
-        // Check if company with name exists
-        if (existingCompany) {
+        // Check if project with title exists
+        if (existingProject) {
             res.status(500).json({
-                error: 'Company with given name already exists.'
+                error: 'Project with given title already exists.'
             })
         }
 
-        // Check if name not given
-        if (!req.body.name) {
+        // Check if title not given
+        if (!req.body.title) {
             res.status(400).json({
                 message: 'Invalid request',
-                error: 'Company name not given.'
+                error: 'Project title not given.'
             });
             return
         }
 
-        // Construct company object
-        const company = new Company({
-            name: req.body.name,
-            businessId: req.body.businessId,
-            industry: req.body.industry,
-            address: req.body.address,
-            contacts: req.body.contacts
+        // Construct project object
+        const project = new Project({
+            title: req.body.title,
+            description: req.body.description,
+            deadline: req.body.deadline,
+            manager: req.body.manager,
+            projectType: req.body.projectType,
+            projectId: req.body.projectId,
+            published: req.body.published,
+            company: req.body.company,
+            users: req.body.users
         });
 
         // Save to database
-        const result = await company.save();
+        const result = await project.save();
 
         // Response
         res.status(200).json({
-            message: 'New company created.',
+            message: 'New project created.',
             result
         })
     } catch (e) {
@@ -104,7 +108,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Update company
+// Update project
 router.put('/:id', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
@@ -114,7 +118,7 @@ router.put('/:id', async (req, res) => {
     // }
     try {
         // Find and update provided values
-        const oldCompany = await Company.findOneAndUpdate({
+        const oldProject = await Project.findOneAndUpdate({
             _id: req.params.id
         }, {
             $set: req.body
@@ -123,8 +127,8 @@ router.put('/:id', async (req, res) => {
         });
 
         res.status(200).json({
-            message: 'Company updated.',
-            oldCompany
+            message: 'Project updated.',
+            oldProject
         })
     } catch (e) {
         res.status(500).json({
@@ -134,26 +138,26 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete company
+// Delete project
 router.delete('/:id', async (req, res) => {
     try {
         // TODO: Cast to ObjectId error response
-        const existingCompany = await Company.findById(req.params.id);
+        const existingProject = await Project.findById(req.params.id);
 
-        if (!existingCompany) {
+        if (!existingProject) {
             res.status(404).json({
                 message: 'Request failed.',
-                error: 'Company not found.'
+                error: 'Project not found.'
             });
             return
         }
 
-        const deletedCompany = await Company.deleteOne({_id: req.params.id});
+        const deletedProject = await Project.deleteOne({_id: req.params.id});
 
         res.status(200).json({
-            message: 'Company deleted.',
-            deletedCompany: existingCompany,
-            status: deletedCompany
+            message: 'Project deleted.',
+            deletedCompany: existingProject,
+            status: deletedProject
         })
     } catch (e) {
         res.status(500).json({

@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const projectSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     description: String,
     deadline: Date,
@@ -45,3 +46,5 @@ const projectSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+module.exports = mongoose.model('Project', projectSchema);
