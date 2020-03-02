@@ -3,33 +3,32 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const authenticated = require('./middleware/authenticated');
 
+// Define app and port
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Parse JSON bodies
 app.use(bodyParser.json());
 
+// Authentication middleware
 app.use(authenticated);
 
 app.get('/', (req, res, next) => {
-    res.send('Hello world!')
+    res.status(404).json({
+        message: 'This API does not contain root route.'
+    })
 });
 
-const userRoutes = require('./routes/users/users');
-app.use('/users', userRoutes);
+// Use routes
+const routes = require('./routes/routes');
+app.use(routes);
 
-const companyRoutes = require('./routes/companies/companies');
-app.use('/companies', companyRoutes);
-
-const projectRoutes = require('./routes/projects/projects');
-app.use('/projects', projectRoutes);
-
-const commentRoutes = require('./routes/comments/comments');
-app.use('/comments', commentRoutes);
-
+// Connect database
 mongoose.connect('mongodb://localhost/projectmanager', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(console.log('\x1b[32m%s\x1b[0m','MongoDB succesfully connected.'))
     .catch(e => console.error(e.message));
 
+// Start server
 app.listen(port, () => {
     console.log('\x1b[32m%s\x1b[0m',`Server listening. (Port: ${port})`)
 });
