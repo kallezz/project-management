@@ -38,6 +38,80 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get comments by project ID
+router.get('/project/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
+    try {
+        // Find all comments
+        const comments = await Comment.find({
+            project: req.params.id
+        }).select('-__v');
+
+        // If none is found return 404, if companies are found return array
+        if (comments.length === 0) {
+            res.status(404).json({
+                message: 'No comments found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/comments'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: 'List of all comments in this project',
+                comments
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
+// Get comments by document ID
+router.get('/document/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
+    try {
+        // Find all comments
+        const comments = await Comment.find({
+            document: req.params.id
+        }).select('-__v');
+
+        // If none is found return 404, if companies are found return array
+        if (comments.length === 0) {
+            res.status(404).json({
+                message: 'No comments found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/comments'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: 'List of all comments in this document',
+                comments
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
 // Get comment by ID
 router.get('/:id', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('user')) {
@@ -66,7 +140,7 @@ router.get('/:id', async (req, res) => {
 
 // Create comment
 router.post('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
+    // if (!req.authenticated || !req.roles.includes('user')) {
     //     res.status(401).json({
     //         message: 'Unauthorized.'
     //     });

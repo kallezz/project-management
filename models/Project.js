@@ -21,7 +21,10 @@ const projectSchema = new mongoose.Schema({
         }
     ],
     documents: [
-        // TODO: Add document schema
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Document'
+        }
     ],
     published: {
         type: Boolean,

@@ -65,6 +65,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// TODO: Get all users by company ID
+
 // Register user
 router.post('/', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Document = require('../../models/Comment');
+const Document = require('../../models/Document');
 const Project = require('../../models/Project');
 
 // Get all documents
@@ -27,6 +27,43 @@ router.get('/', async (req, res) => {
         } else {
             res.status(200).json({
                 info: 'List of all documents',
+                documents
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
+// Get documents by project ID
+router.get('/project/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
+    try {
+        // Find all documents
+        const documents = await Document.find({
+            project: req.params.id
+        }).select('-__v');
+
+        // If none is found return 404, if companies are found return array
+        if (documents.length === 0) {
+            res.status(404).json({
+                message: 'No documents found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/documents'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: 'List of all documents in this project',
                 documents
             })
         }
@@ -82,7 +119,7 @@ router.post('/', async (req, res) => {
         }
 
         // Construct document object
-        const comment = new Document({
+        const document = new Document({
             description: req.body.description,
             project: req.body.project,
             file: req.body.file,
@@ -90,7 +127,7 @@ router.post('/', async (req, res) => {
         });
 
         // Save to database
-        const result = await comment.save();
+        const result = await document.save();
 
         // Update project
         const updatedProject = await Project.updateOne({
@@ -103,7 +140,7 @@ router.post('/', async (req, res) => {
 
         // Response
         res.status(200).json({
-            message: 'New comment created.',
+            message: 'New document created.',
             result,
             updatedProject
         })
@@ -117,7 +154,7 @@ router.post('/', async (req, res) => {
 
 // Update document
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
+    // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
     //         message: 'Unauthorized.'
     //     });
@@ -147,7 +184,7 @@ router.put('/:id', async (req, res) => {
 
 // Delete document
 router.delete('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
+    // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
     //         message: 'Unauthorized.'
     //     });
@@ -160,7 +197,7 @@ router.delete('/:id', async (req, res) => {
         if (!existingDocument) {
             res.status(404).json({
                 message: 'Request failed.',
-                error: 'Comment not found.'
+                error: 'Document not found.'
             });
             return
         }

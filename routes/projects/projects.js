@@ -63,6 +63,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// TODO: Get all projects by company ID
+
 // Create project
 router.post('/', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
