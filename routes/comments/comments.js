@@ -5,6 +5,12 @@ const Project = require('../../models/Project');
 
 // Get all comments
 router.get('/', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find all comments
         const comments = await Comment.find().select('-__v');
@@ -34,6 +40,12 @@ router.get('/', async (req, res) => {
 
 // Get comment by ID
 router.get('/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find comment by ID
         const comment = await Comment.findOne({_id: req.params.id})
@@ -108,7 +120,7 @@ router.post('/', async (req, res) => {
 
 // Update comment
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
+    // if (!req.authenticated || !req.roles.includes('user')) {
     //     res.status(401).json({
     //         message: 'Unauthorized.'
     //     });
@@ -138,6 +150,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete comment
 router.delete('/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // TODO: Cast to ObjectId error response
         const existingComment = await Comment.findById(req.params.id);

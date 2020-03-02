@@ -163,7 +163,7 @@ router.post('/login', async (req, res) => {
 
 // Update user
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || req.userId === req.params.id) {
+    // if (!req.authenticated || req.userId === req.params.id || !req.roles.includes('user')) {
     //     res.status(401).json({
     //         message: 'Unauthorized.'
     //     });

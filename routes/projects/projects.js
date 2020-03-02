@@ -4,6 +4,12 @@ const Project = require('../../models/Project');
 
 // Get all projects
 router.get('/', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find all projects
         const projects = await Project.find().select('-__v');
@@ -33,6 +39,12 @@ router.get('/', async (req, res) => {
 
 // Get project by ID
 router.get('/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Find project by ID
         const project = await Project.findOne({_id: req.params.id})
@@ -140,6 +152,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete project
 router.delete('/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('admin')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // TODO: Cast to ObjectId error response
         const existingProject = await Project.findById(req.params.id);
