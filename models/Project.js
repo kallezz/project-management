@@ -21,7 +21,7 @@ const projectSchema = new mongoose.Schema({
         }
     ],
     documents: [
-
+        // TODO: Add document schema
     ],
     published: {
         type: Boolean,

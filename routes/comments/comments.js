@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const Comment = require('../../models/Comment');
 const Project = require('../../models/Project');
 
-// Get all projects
+// Get all comments
 router.get('/', async (req, res) => {
     try {
-        // Find all projects
-        const projects = await Project.find().select('-__v');
+        // Find all comments
+        const comments = await Comment.find().select('-__v');
 
         // If none is found return 404, if companies are found return array
-        if (projects.length === 0) {
+        if (comments.length === 0) {
             res.status(404).json({
-                message: 'No projects found.',
+                message: 'No comments found.',
                 request: {
                     type: 'POST',
                     url: 'http://localhost:5000/comments'
@@ -19,8 +20,8 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all projects',
-                projects
+                info: 'List of all comments',
+                comments
             })
         }
     } catch (e) {
@@ -31,17 +32,17 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get project by ID
+// Get comment by ID
 router.get('/:id', async (req, res) => {
     try {
-        // Find project by ID
-        const project = await Project.findOne({_id: req.params.id})
+        // Find comment by ID
+        const comment = await Comment.findOne({_id: req.params.id})
             .select('-__v')
-            .populate('users company documents manager comments', '-password -__v');
+            .populate('author project document', '-password -__v');
 
         // Response
         res.status(200).json({
-            project
+            comment
         })
     } catch (e) {
         res.status(500).json({
@@ -51,7 +52,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create project
+// Create comment
 router.post('/', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
@@ -60,45 +61,42 @@ router.post('/', async (req, res) => {
     //     return
     // }
     try {
-        // Find existing project
-        const existingProject = await Project.findOne({title: req.body.title});
-
-        // Check if project with title exists
-        if (existingProject) {
-            res.status(500).json({
-                error: 'Project with given title already exists.'
-            })
-        }
-
-        // Check if title not given
-        if (!req.body.title) {
+        // Check if values not given
+        if (!req.body.title || !req.body.body) {
             res.status(400).json({
                 message: 'Invalid request',
-                error: 'Project title not given.'
+                error: 'Required values missing.'
             });
             return
         }
 
-        // Construct project object
-        const project = new Project({
+        // Construct comment object
+        const comment = new Comment({
             title: req.body.title,
-            description: req.body.description,
-            deadline: req.body.deadline,
-            manager: req.body.manager,
-            projectType: req.body.projectType,
-            projectId: req.body.projectId,
-            published: req.body.published,
-            company: req.body.company,
-            users: req.body.users
+            body: req.body.body,
+            author: req.body.author,
+            project: req.body.project,
+            document: req.body.document,
+            isGlobal: req.body.isGlobal
         });
 
         // Save to database
-        const result = await project.save();
+        const result = await comment.save();
+
+        // Update project
+        const updatedProject = await Project.updateOne({
+            _id: req.body.project
+        }, {
+            $push: {
+                comments: result._id
+            }
+        });
 
         // Response
         res.status(200).json({
-            message: 'New project created.',
-            result
+            message: 'New comment created.',
+            result,
+            updatedProject
         })
     } catch (e) {
         res.status(500).json({
@@ -108,7 +106,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Update project
+// Update comment
 router.put('/:id', async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
     //     res.status(401).json({
@@ -118,7 +116,7 @@ router.put('/:id', async (req, res) => {
     // }
     try {
         // Find and update provided values
-        const oldProject = await Project.findOneAndUpdate({
+        const oldComment = await Comment.findOneAndUpdate({
             _id: req.params.id
         }, {
             $set: req.body
@@ -127,8 +125,8 @@ router.put('/:id', async (req, res) => {
         });
 
         res.status(200).json({
-            message: 'Project updated.',
-            oldProject
+            message: 'Comment updated.',
+            oldComment
         })
     } catch (e) {
         res.status(500).json({
@@ -138,26 +136,36 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete project
+// Delete comment
 router.delete('/:id', async (req, res) => {
     try {
         // TODO: Cast to ObjectId error response
-        const existingProject = await Project.findById(req.params.id);
+        const existingComment = await Comment.findById(req.params.id);
 
-        if (!existingProject) {
+        if (!existingComment) {
             res.status(404).json({
                 message: 'Request failed.',
-                error: 'Project not found.'
+                error: 'Comment not found.'
             });
             return
         }
 
-        const deletedProject = await Project.deleteOne({_id: req.params.id});
+        const deletedComment = await Comment.deleteOne({_id: req.params.id});
+
+        // Update project
+        const updatedProject = await Project.updateOne({
+            _id: existingComment.project
+        }, {
+            $pull: {
+                comments: req.params.id
+            }
+        });
 
         res.status(200).json({
-            message: 'Project deleted.',
-            deletedCompany: existingProject,
-            status: deletedProject
+            message: 'Comment deleted.',
+            deletedComment: existingComment,
+            status: deletedComment,
+            updatedProject
         })
     } catch (e) {
         res.status(500).json({

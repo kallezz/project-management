@@ -23,6 +23,9 @@ app.use('/companies', companyRoutes);
 const projectRoutes = require('./routes/projects/projects');
 app.use('/projects', projectRoutes);
 
+const commentRoutes = require('./routes/comments/comments');
+app.use('/comments', commentRoutes);
+
 mongoose.connect('mongodb://localhost/projectmanager', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(console.log('\x1b[32m%s\x1b[0m','MongoDB succesfully connected.'))
     .catch(e => console.error(e.message));
