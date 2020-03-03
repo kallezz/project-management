@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
             res.status(200).json({
                 info: {
                     message: 'Paginated results',
-                    resource: 'Projects',
+                    resource: 'Users',
                     query: {
                         page: 'page',
                         limit: 'perPage',

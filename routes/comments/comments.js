@@ -12,11 +12,27 @@ router.get('/', async (req, res) => {
     //     return
     // }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            title: new RegExp(req.query.title, 'i')
+        };
+
         // Find all comments
-        const comments = await Comment.find().select('-__v');
+        const comments = await Comment.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
-        if (comments.length === 0) {
+        if (comments.docs.length === 0) {
             res.status(404).json({
                 message: 'No comments found.',
                 request: {
@@ -26,7 +42,15 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all comments',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Comments',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 comments
             })
         }
@@ -47,13 +71,28 @@ router.get('/project/:id', async (req, res) => {
     //     return
     // }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            project: req.params.id,
+            title: new RegExp(req.query.title, 'i')
+        };
+
         // Find all comments
-        const comments = await Comment.find({
-            project: req.params.id
-        }).select('-__v');
+        const comments = await Comment.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
-        if (comments.length === 0) {
+        if (comments.docs.length === 0) {
             res.status(404).json({
                 message: 'No comments found.',
                 request: {
@@ -63,7 +102,15 @@ router.get('/project/:id', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all comments in this project',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Comments',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 comments
             })
         }
@@ -84,7 +131,7 @@ router.get('/document/:id', async (req, res) => {
     //     return
     // }
     try {
-        // Find all comments
+        // Find all comments TODO: Pagination
         const comments = await Comment.find({
             document: req.params.id
         }).select('-__v');
