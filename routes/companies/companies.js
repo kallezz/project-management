@@ -11,11 +11,27 @@ router.get('/', async (req, res) => {
     //     return
     // }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            name: new RegExp(req.query.name, 'i')
+        };
+
         // Find all companies
-        const companies = await Company.find().select('-__v');
+        const companies = await Company.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
-        if (companies.length === 0) {
+        if (companies.docs.length === 0) {
             res.status(404).json({
                 message: 'No companies found.',
                 request: {
@@ -25,7 +41,15 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all companies',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Companies',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 companies
             })
         }

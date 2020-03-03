@@ -13,11 +13,28 @@ router.get('/', async (req, res) => {
     //     return
     // }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v -password',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            username: new RegExp(req.query.username, 'i'),
+            roles: new RegExp(req.query.roles, 'i')
+        };
+
         // Find all users
-        const users = await User.find().select('-password -__v');
+        const users = await User.paginate(regexQuery, options);
 
         // If users not found return 404, if users are found return array
-        if (users.length === 0) {
+        if (users.docs.length === 0) {
             res.status(404).json({
                 message: 'No users found.',
                 request: {
@@ -27,7 +44,15 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all users',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Projects',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 users
             })
         }

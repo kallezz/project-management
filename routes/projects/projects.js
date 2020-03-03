@@ -11,11 +11,32 @@ router.get('/', async (req, res) => {
     //     return
     // }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            populate: {
+                path: 'manager',
+                select: '-password'
+            },
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            title: new RegExp(req.query.title, 'i'),
+            projectId: new RegExp(req.query.projectId, 'i')
+        };
+
         // Find all projects
-        const projects = await Project.find().select('-__v');
+        const projects = await Project.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
-        if (projects.length === 0) {
+        if (projects.docs.length === 0) {
             res.status(404).json({
                 message: 'No projects found.',
                 request: {
@@ -25,7 +46,15 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all projects',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Projects',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 projects
             })
         }
@@ -63,7 +92,70 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// TODO: Get all projects by company ID
+// Get all projects by company ID
+router.get('/company/:id', async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('user')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
+    try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            populate: {
+                path: 'manager',
+                select: '-password'
+            },
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            company: req.params.id,
+            title: new RegExp(req.query.title, 'i'),
+            projectId: new RegExp(req.query.projectId, 'i')
+        };
+
+        // Find project by ID
+        const projects = await Project.paginate(regexQuery, options);
+
+        // If none is found return 404, if companies are found return array
+        if (projects.docs.length === 0) {
+            res.status(404).json({
+                message: 'No projects found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/projects'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Projects',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
+                projects
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
 
 // Create project
 router.post('/', async (req, res) => {
