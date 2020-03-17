@@ -4,12 +4,12 @@ const Company = require('../../models/Company');
 
 // Get all companies
 router.get('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Pagination options
         const { page, perPage, paginate } = req.query;
@@ -63,12 +63,12 @@ router.get('/', async (req, res) => {
 
 // Get company by ID
 router.get('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find company by ID
         const company = await Company.findOne({_id: req.params.id})
@@ -89,12 +89,12 @@ router.get('/:id', async (req, res) => {
 
 // Create company
 router.post('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find existing company
         const existingCompany = await Company.findOne({name: req.body.name});
@@ -142,12 +142,12 @@ router.post('/', async (req, res) => {
 
 // Update company
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find and update provided values
         const oldCompany = await Company.findOneAndUpdate({
@@ -172,12 +172,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete company
 router.delete('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // TODO: Cast to ObjectId error response
         const existingCompany = await Company.findById(req.params.id);

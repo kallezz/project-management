@@ -5,12 +5,12 @@ const Project = require('../../models/Project');
 
 // Get all comments
 router.get('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Pagination options
         const { page, perPage, paginate } = req.query;
@@ -64,12 +64,12 @@ router.get('/', async (req, res) => {
 
 // Get comments by project ID
 router.get('/project/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Pagination options
         const { page, perPage, paginate } = req.query;
@@ -124,20 +124,35 @@ router.get('/project/:id', async (req, res) => {
 
 // Get comments by document ID
 router.get('/document/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
-        // Find all comments TODO: Pagination
-        const comments = await Comment.find({
-            document: req.params.id
-        }).select('-__v');
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            document: req.params.id,
+            title: new RegExp(req.query.title, 'i')
+        };
+
+        // Find all comments
+        const comments = await Comment.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
-        if (comments.length === 0) {
+        if (comments.docs.length === 0) {
             res.status(404).json({
                 message: 'No comments found.',
                 request: {
@@ -147,7 +162,15 @@ router.get('/document/:id', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all comments in this document',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Comments',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 comments
             })
         }
@@ -161,12 +184,12 @@ router.get('/document/:id', async (req, res) => {
 
 // Get comment by ID
 router.get('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find comment by ID
         const comment = await Comment.findOne({_id: req.params.id})
@@ -187,12 +210,12 @@ router.get('/:id', async (req, res) => {
 
 // Create comment
 router.post('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Check if values not given
         if (!req.body.title || !req.body.body) {
@@ -241,12 +264,12 @@ router.post('/', async (req, res) => {
 
 // Update comment
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find and update provided values
         const oldComment = await Comment.findOneAndUpdate({
@@ -271,12 +294,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete comment
 router.delete('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // TODO: Cast to ObjectId error response
         const existingComment = await Comment.findById(req.params.id);

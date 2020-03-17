@@ -2,10 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const authenticated = require('./middleware/authenticated');
+const cors = require('cors');
 
 // Define app and port
 const app = express();
 const port = process.env.PORT || 5000;
+
+// CORS
+app.use(cors());
 
 // Parse JSON bodies
 app.use(bodyParser.json());

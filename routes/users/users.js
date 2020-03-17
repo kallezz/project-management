@@ -6,12 +6,12 @@ const User = require('../../models/User');
 
 // Get all users
 router.get('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Pagination options
         const { page, perPage, paginate } = req.query;
@@ -35,25 +35,25 @@ router.get('/', async (req, res) => {
 
         // If users not found return 404, if users are found return array
         if (users.docs.length === 0) {
-            res.status(404).json({
-                message: 'No users found.',
-                request: {
-                    type: 'POST',
-                    url: 'http://localhost:5000/users'
-                }
-            })
-        } else {
-            res.status(200).json({
-                info: {
-                    message: 'Paginated results',
-                    resource: 'Users',
-                    query: {
-                        page: 'page',
-                        limit: 'perPage',
-                        disable: 'paginate=false'
+                res.status(404).json({
+                    message: 'No users found.',
+                    request: {
+                        type: 'POST',
+                        url: 'http://localhost:5000/users'
                     }
-                },
-                users
+                })
+            } else {
+                res.status(200).json({
+                    info: {
+                        message: 'Paginated results',
+                        resource: 'Users',
+                        query: {
+                            page: 'page',
+                            limit: 'perPage',
+                            disable: 'paginate=false'
+                        }
+                    },
+                    users
             })
         }
     } catch (e) {
@@ -66,16 +66,16 @@ router.get('/', async (req, res) => {
 
 // Find user by ID
 router.get('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find company by ID
         const user = await User.findOne({_id: req.params.id})
-            .select('-__v')
+            .select('-__v -password')
             .populate('company');
 
         // Response
@@ -94,12 +94,12 @@ router.get('/:id', async (req, res) => {
 
 // Register user
 router.post('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find existing user
         const existingUser = await User.findOne({email: req.body.username});
@@ -130,7 +130,10 @@ router.post('/', async (req, res) => {
         // Response
         res.status(200).json({
             message: 'New user created.',
-            result
+            result: {
+                ...result._doc,
+                password: null
+            }
         })
     } catch (e) {
         res.status(500).json({
@@ -173,12 +176,15 @@ router.post('/login', async (req, res) => {
             expiresIn: '24h'
         });
 
+        const expiresIn = new Date(Date.now() + 1000 /*sec*/ * 60 /*min*/ * 60 /*hour*/ * 24);
+
         // Return a token in response
         res.status(200).json({
             userId: user._id,
             username: user.username,
             roles: user.roles,
-            token
+            token,
+            expiresIn
         })
     } catch (e) {
         res.status(401).json({
@@ -190,37 +196,43 @@ router.post('/login', async (req, res) => {
 
 // Update user
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || req.userId === req.params.id || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    // TODO: Bypass userId with admin
+    if (!req.authenticated || req.userId === req.params.id || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find user by ID
         const user = await User.findOne({_id: req.params.id});
 
         // If new password
         if (req.body.password) {
-            // Check if old password was given
-            if (!req.body.oldPassword) {
-                res.status(401).json({
-                    message: 'Authorization failed.',
-                    error: 'Old password not provided.'
-                });
-                return
-            }
 
-            // Compare old password
-            const isEqual = await bcrypt.compare(req.body.oldPassword, user.password);
+            // Check if not admin
+            if (!req.roles.includes('admin')) {
 
-            // Check if old password was incorrect
-            if (!isEqual) {
-                res.status(401).json({
-                    message: 'Authorization failed.',
-                    error: 'Old password does not match.'
-                });
-                return
+                // Check if old password was given
+                if (!req.body.oldPassword) {
+                    res.status(401).json({
+                        message: 'Authorization failed.',
+                        error: 'Old password not provided.'
+                    });
+                    return
+                }
+
+                // Compare old password
+                const isEqual = await bcrypt.compare(req.body.oldPassword, user.password);
+
+                // Check if old password was incorrect
+                if (!isEqual) {
+                    res.status(401).json({
+                        message: 'Authorization failed.',
+                        error: 'Old password does not match.'
+                    });
+                    return
+                }
             }
 
             // Hash new password
@@ -254,6 +266,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete user
 router.delete('/:id', async (req, res) => {
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // TODO: Cast to ObjectId error response
         const existingUser = await User.findById(req.params.id);
@@ -270,7 +288,10 @@ router.delete('/:id', async (req, res) => {
 
         res.status(200).json({
             message: 'User deleted.',
-            deletedUser: existingUser,
+            deletedUser: {
+                ...existingUser._doc,
+                password: null
+            },
             status: deletedUser
         })
     } catch (e) {

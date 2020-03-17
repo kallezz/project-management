@@ -5,15 +5,31 @@ const Project = require('../../models/Project');
 
 // Get all documents
 router.get('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
+        // Pagination options
+        const { page, perPage, paginate } = req.query;
+        const paginateBool = paginate ? (paginate === 'true') : true;
+
+        const options = {
+            page: parseInt(page) ||1,
+            limit: parseInt(perPage) || 10,
+            select: '-__v',
+            pagination: paginateBool
+        };
+
+        // Filters
+        const regexQuery = {
+            description: new RegExp(req.query.description, 'i')
+        };
+
         // Find all documents
-        const documents = await Document.find().select('-__v');
+        const documents = await Document.paginate(regexQuery, options);
 
         // If none is found return 404, if companies are found return array
         if (documents.length === 0) {
@@ -26,7 +42,15 @@ router.get('/', async (req, res) => {
             })
         } else {
             res.status(200).json({
-                info: 'List of all documents',
+                info: {
+                    message: 'Paginated results',
+                    resource: 'Documents',
+                    query: {
+                        page: 'page',
+                        limit: 'perPage',
+                        disable: 'paginate=false'
+                    }
+                },
                 documents
             })
         }
@@ -40,12 +64,12 @@ router.get('/', async (req, res) => {
 
 // Get documents by project ID
 router.get('/project/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find all documents
         const documents = await Document.find({
@@ -77,12 +101,12 @@ router.get('/project/:id', async (req, res) => {
 
 // Get document by ID
 router.get('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('user')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('user')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find document by ID
         const document = await Document.findOne({_id: req.params.id})
@@ -102,12 +126,12 @@ router.get('/:id', async (req, res) => {
 
 // Create document
 router.post('/', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Check if values not given
         if (!req.body.file || !req.body.project) {
@@ -154,12 +178,12 @@ router.post('/', async (req, res) => {
 
 // Update document
 router.put('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // Find and update provided values
         const oldDocument = await Document.findOneAndUpdate({
@@ -184,12 +208,12 @@ router.put('/:id', async (req, res) => {
 
 // Delete document
 router.delete('/:id', async (req, res) => {
-    // if (!req.authenticated || !req.roles.includes('admin')) {
-    //     res.status(401).json({
-    //         message: 'Unauthorized.'
-    //     });
-    //     return
-    // }
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
     try {
         // TODO: Cast to ObjectId error response
         const existingDocument = await Document.findById(req.params.id);
