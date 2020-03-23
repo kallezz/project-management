@@ -66,6 +66,44 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get project titles
+router.get('/titles', async (req, res) => {
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
+    try {
+        // Find all projects
+        const projects = await Project.find().select('title _id');
+
+        // If none is found return 404, if companies are found return array
+        if (projects.length === 0) {
+            res.status(404).json({
+                message: 'No projects found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/comments'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: {
+                    message: 'Results',
+                    resource: 'Projects',
+                },
+                projects
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
 // Get project by ID
 router.get('/:id', async (req, res) => {
     if (!req.authenticated || !req.roles.includes('user')) {

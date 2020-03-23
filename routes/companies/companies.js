@@ -61,6 +61,44 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get company names
+router.get('/titles', async (req, res) => {
+    if (!req.authenticated || !req.roles.includes('admin')) {
+        res.status(401).json({
+            message: 'Unauthorized.'
+        });
+        return
+    }
+    try {
+        // Find all companies
+        const company = await Company.find().select('name _id');
+
+        // If none is found return 404, if companies are found return array
+        if (company.length === 0) {
+            res.status(404).json({
+                message: 'No companies found.',
+                request: {
+                    type: 'POST',
+                    url: 'http://localhost:5000/comments'
+                }
+            })
+        } else {
+            res.status(200).json({
+                info: {
+                    message: 'Results',
+                    resource: 'Companies',
+                },
+                projects: company
+            })
+        }
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
 // Get company by ID
 router.get('/:id', async (req, res) => {
     if (!req.authenticated || !req.roles.includes('user')) {
