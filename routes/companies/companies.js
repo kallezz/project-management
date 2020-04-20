@@ -88,7 +88,7 @@ router.get('/titles', async (req, res) => {
                     message: 'Results',
                     resource: 'Companies',
                 },
-                projects: company
+                companies: company
             })
         }
     } catch (e) {

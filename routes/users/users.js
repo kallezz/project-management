@@ -176,7 +176,7 @@ router.post('/login', async (req, res) => {
             expiresIn: '24h'
         });
 
-        const expiresIn = new Date(Date.now() + 1000 /*sec*/ * 60 /*min*/ * 60 /*hour*/ * 24);
+        const expiresIn = new Date(Date.now() + 1000  /*sec*/ * 60 /*min*/ * 60 /*hour*/ * 24);
 
         // Return a token in response
         res.status(200).json({
