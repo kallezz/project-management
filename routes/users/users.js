@@ -21,7 +21,8 @@ router.get('/', async (req, res) => {
             page: parseInt(page) ||1,
             limit: parseInt(perPage) || 10,
             select: '-__v -password',
-            pagination: paginateBool
+            pagination: paginateBool,
+            sort: '-updatedAt'
         };
 
         // Filters

@@ -23,7 +23,8 @@ router.get('/', async (req, res) => {
                 path: 'manager',
                 select: '-password'
             },
-            pagination: paginateBool
+            pagination: paginateBool,
+            sort: '-updatedAt'
         };
 
         // Filters
