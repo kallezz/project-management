@@ -122,7 +122,8 @@ router.post('/', async (req, res) => {
             email: req.body.email,
             password: hash,
             phone: req.body.phone,
-            roles: req.body.roles
+            roles: req.body.roles,
+            company: req.body.company
         });
 
         // Save to database
