@@ -22,6 +22,10 @@ const documentSchema = new mongoose.Schema({
             required: true
         }
     },
+    position: {
+        xPos: String,
+        yPos: String
+    },
     accepted: {
         type: Boolean,
         required: true,

@@ -1,7 +1,33 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const Document = require('../../models/Document');
 const Project = require('../../models/Project');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './uploads');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '_' + file.originalname)
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+};
+
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 1024 * 1024 * 8
+    },
+    fileFilter
+});
 
 // Get all documents
 router.get('/', async (req, res) => {
@@ -125,28 +151,32 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create document
-router.post('/', async (req, res) => {
-    if (!req.authenticated || !req.roles.includes('admin')) {
-        res.status(401).json({
-            message: 'Unauthorized.'
-        });
-        return
-    }
+router.post('/', upload.single('document'), async (req, res) => {
+    // if (!req.authenticated || !req.roles.includes('admin')) {
+    //     res.status(401).json({
+    //         message: 'Unauthorized.'
+    //     });
+    //     return
+    // }
     try {
         // Check if values not given
-        if (!req.body.file || !req.body.project) {
-            res.status(400).json({
-                message: 'Invalid request',
-                error: 'Required values missing.'
-            });
-            return
-        }
+        // if (!req.body.document || !req.body.project) {
+        //     res.status(400).json({
+        //         message: 'Invalid request',
+        //         error: 'Required values missing.'
+        //     });
+        //     return
+        // }
 
         // Construct document object
         const document = new Document({
             description: req.body.description,
             project: req.body.project,
-            file: req.body.file,
+            file: {
+                fileName: req.file.filename,
+                filePath: `./uploads/${req.file.filename}`,
+                fileType: req.file.mimetype
+            },
             accepted: req.body.accepted
         });
 
