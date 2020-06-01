@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Comment = require('../../models/Comment');
 const Project = require('../../models/Project');
+const User = require('../../models/User');
 
 // Get all comments
 router.get('/', async (req, res) => {
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
 
         // Filters
         const regexQuery = {
-            title: new RegExp(req.query.title, 'i')
+            body: new RegExp(req.query.body, 'i')
         };
 
         // Find all comments
@@ -79,13 +80,18 @@ router.get('/project/:id', async (req, res) => {
             page: parseInt(page) ||1,
             limit: parseInt(perPage) || 10,
             select: '-__v',
-            pagination: paginateBool
+            pagination: paginateBool,
+            sort: '-createdAt',
+            populate: {
+                path: 'author',
+                select: 'username _id'
+            }
         };
 
         // Filters
         const regexQuery = {
             project: req.params.id,
-            title: new RegExp(req.query.title, 'i')
+            body: new RegExp(req.query.body, 'i')
         };
 
         // Find all comments
@@ -145,7 +151,7 @@ router.get('/document/:id', async (req, res) => {
         // Filters
         const regexQuery = {
             document: req.params.id,
-            title: new RegExp(req.query.title, 'i')
+            body: new RegExp(req.query.body, 'i')
         };
 
         // Find all comments
@@ -218,7 +224,7 @@ router.post('/', async (req, res) => {
     }
     try {
         // Check if values not given
-        if (!req.body.title || !req.body.body) {
+        if (!req.body.body) {
             res.status(400).json({
                 message: 'Invalid request',
                 error: 'Required values missing.'
@@ -228,7 +234,6 @@ router.post('/', async (req, res) => {
 
         // Construct comment object
         const comment = new Comment({
-            title: req.body.title,
             body: req.body.body,
             author: req.body.author,
             project: req.body.project,
@@ -248,10 +253,19 @@ router.post('/', async (req, res) => {
             }
         });
 
+        // Get author
+        const commentAuthor = await User.findOne({_id: req.body.author});
+
         // Response
         res.status(200).json({
             message: 'New comment created.',
-            result,
+            result: {
+                ...result._doc,
+                author: {
+                    _id: commentAuthor._id,
+                    username: commentAuthor.username
+                }
+            },
             updatedProject
         })
     } catch (e) {
