@@ -9,12 +9,8 @@ const documentSchema = new mongoose.Schema({
         required: true
     },
     file: {
-        fileName: {
-            type: String,
-            required: true
-        },
-        filePath: {
-            type: String,
+        fileBuffer: {
+            type: Buffer,
             required: true
         },
         fileType: {

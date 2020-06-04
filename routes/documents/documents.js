@@ -1,8 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const fs = require('fs');
 const Document = require('../../models/Document');
 const Project = require('../../models/Project');
+
+const acceptedFileTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/tiff',
+    'image/gif',
+    'application/pdf',
+    'application/zip'
+];
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -14,7 +24,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg') {
+    if (acceptedFileTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
         cb(null, false);
@@ -150,6 +160,20 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// Get doc by ID
+router.get ('/file/:id', async (req, res) => {
+    try {
+        const doc = await Document.findOne({_id: req.params.id});
+        res.contentType(doc.file.fileType.toString());
+        res.send(doc.file.fileBuffer);
+    } catch (e) {
+        res.status(500).json({
+            message: 'Unexpected error',
+            error: e
+        })
+    }
+});
+
 // Create document
 router.post('/', upload.single('document'), async (req, res) => {
     // if (!req.authenticated || !req.roles.includes('admin')) {
@@ -168,13 +192,15 @@ router.post('/', upload.single('document'), async (req, res) => {
         //     return
         // }
 
+        const doc = fs.readFileSync(req.file.path);
+        const encode_doc = doc.toString('base64');
+
         // Construct document object
         const document = new Document({
             description: req.body.description,
             project: req.body.project,
             file: {
-                fileName: req.file.filename,
-                filePath: `./uploads/${req.file.filename}`,
+                fileBuffer: new Buffer(encode_doc, 'base64'),
                 fileType: req.file.mimetype
             },
             accepted: req.body.accepted
