@@ -108,3 +108,6 @@ dist
 
 # Jetbrains IDEs
 .idea
+
+# Uploaded files
+/uploads
