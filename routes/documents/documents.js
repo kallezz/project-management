@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const fs = require('fs');
+const cors = require('cors');
+const mongoose = require('mongoose');
 const Document = require('../../models/Document');
 const Project = require('../../models/Project');
 
@@ -110,7 +112,7 @@ router.get('/project/:id', async (req, res) => {
         // Find all documents
         const documents = await Document.find({
             project: req.params.id
-        }).select('-__v');
+        }).select('-__v -file');
 
         // If none is found return 404, if companies are found return array
         if (documents.length === 0) {
@@ -161,15 +163,24 @@ router.get('/:id', async (req, res) => {
 });
 
 // Get doc by ID
-router.get ('/file/:id', async (req, res) => {
+
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+router.get ('/file/:id', cors(corsOptions), async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw new Error(`File with an id of ${req.params.id} cannot be found.`);
+        }
         const doc = await Document.findOne({_id: req.params.id});
         res.contentType(doc.file.fileType.toString());
         res.send(doc.file.fileBuffer);
     } catch (e) {
         res.status(500).json({
             message: 'Unexpected error',
-            error: e
+            error: e.message
         })
     }
 });

@@ -21,4 +21,8 @@ app.use('/comments', commentRoutes);
 const documentRoutes = require('./documents/documents');
 app.use('/documents', documentRoutes);
 
+// Mail routes
+const mailRoutes = require('./email/email');
+app.use('/mail', mailRoutes);
+
 module.exports = app;
